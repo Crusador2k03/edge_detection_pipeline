@@ -26,7 +26,7 @@ Drop any image onto the application window and it runs a full edge detection pip
 | Edges — Blur Only | Canny after Gaussian blur preprocessing |
 | Edges — Blur + Cleaned | Canny after blur, then morphological closing (best case) |
 
-Each output is automatically saved to the `outputs/` folder with a timestamp.
+Each output is automatically saved to the `outputs/` folder with timestamps.
 
 ---
 
