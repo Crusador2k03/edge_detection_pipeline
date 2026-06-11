@@ -1,81 +1,140 @@
-# Edge Detection on Industrial Images
+# Industrial Edge Detection Pipeline
 
-## Overview
+A drag-and-drop desktop application for detecting structural boundaries in industrial component images. Demonstrates the progressive effect of preprocessing on edge detection quality — from raw noisy input to clean morphologically-processed output.
 
-This project implements a classical computer vision pipeline for edge extraction from industrial images using OpenCV. The objective is to identify structural boundaries and geometric features in industrial components such as gears, circuit boards, and machine parts.
-
-The pipeline applies image preprocessing techniques followed by Canny edge detection to generate clean and informative edge maps suitable for inspection, feature extraction, and downstream computer vision tasks.
-
----
-
-## Features
-
-- Image loading and preprocessing
-- Grayscale conversion
-- Gaussian noise reduction
-- Canny edge detection
-- Comparative analysis on noisy images
-- Batch processing of multiple industrial images
-- Automated output image generation
+![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green?style=flat-square&logo=opencv)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-3.4+-11557c?style=flat-square)
+![Tkinter](https://img.shields.io/badge/GUI-Tkinter-orange?style=flat-square)
 
 ---
 
-## Methodology
+## Preview
 
-The processing pipeline follows the sequence:
+![Edge Detection Output](outputs/gear_20260610_233729.png)
 
-```text
+---
+
+## What It Does
+
+Drop any image onto the application window and it runs a full edge detection pipeline, producing a 2×2 comparison plot showing each stage of processing:
+
+| Panel | Description |
+|-------|-------------|
+| Original Image | Source image as loaded |
+| Edges — Noisy | Canny applied directly on noise-injected grayscale (worst case) |
+| Edges — Blur Only | Canny after Gaussian blur preprocessing |
+| Edges — Blur + Cleaned | Canny after blur, then morphological closing (best case) |
+
+Each output is automatically saved to the `outputs/` folder with a timestamp.
+
+---
+
+## Pipeline
+
+```
 Input Image
-     ↓
-Grayscale Conversion
-     ↓
-Gaussian Blur
-     ↓
-Canny Edge Detection
-     ↓
-Edge Map Generation
+    │
+    ├─ BGR → RGB             (for display)
+    │
+    └─ BGR → Grayscale
+            │
+            ├─ + Gaussian Noise (σ=25)     ← simulates real sensor noise
+            │       │
+            │       └─ Canny ──────────────► Edges (Noisy)
+            │
+            └─ Gaussian Blur (5×5)
+                    │
+                    ├─ Canny ──────────────► Edges (Blur Only)
+                    │
+                    └─ Morphological Close ► Edges (Blur + Cleaned)
 ```
 
-## Technologies Used
+### Why Each Step Exists
 
-- Python
-- OpenCV
-- NumPy
-- Matplotlib
+**Gaussian Noise injection** simulates real-world sensor conditions — industrial cameras and encoders always have some level of electrical noise. Without it, the comparison between filtered and unfiltered would be misleading.
 
-## Results
+**Gaussian Blur** smooths out high-frequency noise before edge detection. Canny's gradient computation is highly sensitive to noise; blur prevents false edges from being detected.
 
-The pipeline successfully extracts edges from:
-- Gears
-- Circuit Boards
-- Machine Parts
-- Metal Components
+**Morphological Closing** (`MORPH_CLOSE`) dilates then erodes the edge map, connecting nearby broken edge segments into continuous contours — critical for downstream tasks like contour tracing or defect detection.
 
-## Installation
+---
 
-requirements.txt is a list of all dependencies required to run the pipeline on your system.
-- Run the below command in your terminal:
+## Parameters
+
+Tunable at the top of the script:
+
+```python
+LOW_THRESHOLD  = 100   # Canny lower hysteresis threshold
+HIGH_THRESHOLD = 200   # Canny upper hysteresis threshold
+```
+
+The ratio of `HIGH / LOW = 2:1` follows the commonly recommended Canny guideline. Lowering both thresholds detects more edges (including weak ones); raising them keeps only strong, well-defined boundaries.
+
+---
+
+## Requirements
+
+```
+opencv-python
+matplotlib
+numpy
+tkinterdnd2
+```
+
+Install with:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Running the program
-Run this on your terminal to start using the pipeline:
+> **Note:** `tkinterdnd2` provides drag-and-drop support for Tkinter. On some Linux systems you may need to install `python3-tk` via your package manager before running.
+
+---
+
+## Usage
+
 ```bash
 python edge_detection.py
 ```
 
-## Results
+A dark-themed window will open. Drag and drop any supported image file onto it — the pipeline runs automatically and the result plot appears immediately.
 
-### Gear
+**Supported formats:** `.jpg` `.jpeg` `.png` `.bmp` `.tiff`
 
-![Gear Result](outputs\gear_20260610_234211.png)
+Output images are saved to:
+```
+outputs/<original_filename>_<YYYYMMDD_HHMMSS>.png
+```
 
-### Circuit Board
+---
 
-![Circuit Result](outputs\circuit_board_20260610_234032.png)
+## Project Structure
 
-### Machine Parts
+```
+edge-detection/
+├── images/                        # input images
+│   ├── circuit_board.png
+│   ├── circuit.jpg
+│   ├── gear.png
+│   └── machine_parts.jpeg
+├── outputs/                       # auto-generated, timestamped result images
+│   ├── circuit_20260610_233....png
+│   ├── circuit_board_20260610_...png
+│   ├── gear_20260610_2337....png
+│   ├── gear_20260610_2342....png
+│   └── machine_parts_2026....png
+├── venv/                          # virtual environment (not tracked by git)
+├── .gitignore
+├── edge_detection.py              # main pipeline and GUI
+├── README.md
+└── requirements.txt
+```
 
-![Machine Parts Result](outputs\machine_parts_20260610_234133.png)
+---
+
+## Author
+
+**Siddharth Kar**
+
+---
